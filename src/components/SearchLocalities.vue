@@ -8,15 +8,19 @@
       <md-card-content>
         <md-autocomplete
             class="search"
-            v-model="selectedEmployee"
-            :md-options="employees"
+            v-model="selectedLocality"
+            :md-options="localities"
             @md-changed="onInputChanged"
             @md-selected="onValueSelected"
             md-layout="box">
           <label>Search...</label>
         </md-autocomplete>
+        <md-field>
+          <label>Selected locality</label>
+          <md-textarea v-model="selectedLocality" :disabled="true"></md-textarea>
+        </md-field>
         <md-card-actions>
-          <md-button type="submit" class="md-primary" :disabled="sending">Send</md-button>
+          <md-button type="submit" class="md-primary">Help</md-button>
         </md-card-actions>
       </md-card-content>
     </md-card>
@@ -24,34 +28,27 @@
 </template>
 
 <script>
+  import {search} from "@/lib/search-service";
+
   export default {
     name: "SearchLocalities",
     data: () => ({
-      selectedEmployee: null,
-      sending: false,
-      employees: [
-        'Jim Halpert',
-        'Dwight Schrute',
-        'Michael Scott',
-        'Pam Beesly',
-        'Angela Martin',
-        'Kelly Kapoor',
-        'Ryan Howard',
-        'Kevin Malone',
-        'Creed Bratton',
-        'Oscar Nunez',
-        'Toby Flenderson',
-        'Stanley Hudson',
-        'Meredith Palmer',
-        'Phyllis Lapin-Vance'
-      ]
+      selectedLocality: null,
+      localities: []
     }),
     methods: {
       onInputChanged(e) {
         this.searchAdress(e);
       },
       searchAdress(addr) {
-        console.log('[Search]', addr);
+        const query = isNaN(parseInt(addr)) ? `city:*${addr}*` : `zip:*${addr}*`;
+        this.localities = search('http://localhost:9200/swtest/_search', query).then(data => {
+          const d = data.map(d => `${d.zip} ${d.city}`)
+          console.log(d);
+          return d;
+        }).catch(e => {
+          console.log('error', e);
+        });
       },
       onValueSelected(v) {
         console.log('[Selected]', v);
