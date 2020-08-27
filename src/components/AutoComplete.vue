@@ -11,14 +11,14 @@
             v-model="selectedAddress"
             :md-options="addresses"
             :md-open-on-focus="false"
-            @md-changed="onInputChanged"
+            @md-changed="searchAdress"
             @md-selected="onValueSelected"
             md-layout="box">
           <label>Search an address...</label>
         </md-autocomplete>
         <md-field>
           <label>Selected address</label>
-          <md-textarea v-model="selectedAddress" disabled="true"></md-textarea>
+          <md-textarea v-model="selectedAddress" :disabled="true"></md-textarea>
         </md-field>
         <md-card-actions>
           <md-button class="md-primary">Help</md-button>
@@ -29,22 +29,26 @@
 </template>
 
 <script>
-  export default {
+import { search } from "@/lib/search-service";
+
+export default {
     name: "AutoComplete",
     data: () => ({
       selectedAddress: null,
-      addresses: [
-        'rue des cedres, 3 1920 Martigny, Valais, Suisse',
-        'route de Villette 1934 Le Chable, Valais, Suisse',
-        'route de Medran 1936 Verbier, Valais, Suisse',
-      ]
+      addresses: []
     }),
     methods: {
       onInputChanged(e) {
         this.searchAdress(e);
       },
       searchAdress(addr) {
-        console.log('[Search]', addr);
+        this.addresses = search('http://localhost:9200/swtest/_search', `address:*${addr}*`).then(data => {
+          const d = data.map(d => d.address)
+          console.log(d);
+          return d;
+        }).catch(e => {
+          console.log('error', e);
+        });
       },
       onValueSelected(v) {
         console.log('[Selected]', v);
