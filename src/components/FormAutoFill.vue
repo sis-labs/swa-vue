@@ -8,8 +8,8 @@
       <md-card-content>
         <md-autocomplete
             class="search"
-            v-model="selectedEmployee"
-            :md-options="employees"
+            v-model="selectedAddress"
+            :md-options="addresses"
             @md-changed="onInputChanged"
             @md-selected="onValueSelected"
             md-layout="box">
@@ -70,10 +70,12 @@
 </template>
 
 <script>
+  import {search} from "@/lib/search-service";
+
   export default {
     name: "FormAutoFill",
     data: () => ({
-      selectedEmployee: null,
+      selectedAddress: null,
       sending: false,
       form: {
         num: null,
@@ -83,32 +85,35 @@
         commune: null,
         country: null,
       },
-      employees: [
-        'Jim Halpert',
-        'Dwight Schrute',
-        'Michael Scott',
-        'Pam Beesly',
-        'Angela Martin',
-        'Kelly Kapoor',
-        'Ryan Howard',
-        'Kevin Malone',
-        'Creed Bratton',
-        'Oscar Nunez',
-        'Toby Flenderson',
-        'Stanley Hudson',
-        'Meredith Palmer',
-        'Phyllis Lapin-Vance'
-      ]
+      addresses: []
     }),
     methods: {
       onInputChanged(e) {
         this.searchAdress(e);
       },
       searchAdress(addr) {
-        console.log('[Search]', addr);
+        this.addresses = search('http://localhost:9200/swtest/_search', `address:*${addr}*`).then(data => {
+          const d = data.map(d => d.address)
+          console.log(d);
+          return d;
+        }).catch(e => {
+          console.log('error', e);
+        });
       },
       onValueSelected(v) {
-        console.log('[Selected]', v);
+        this.addresses = search('http://localhost:9200/swtest/_search', `address:*${v}*`).then(data => {
+          const d = data[0];
+          this.form = {
+            num: d.nb,
+            street: d.street,
+            city: d.city,
+            zip: d.zip,
+            commune: d.state,
+            country: d.country,
+          }
+        }).catch(e => {
+          console.log('error', e);
+        });
       }
     }
   }
